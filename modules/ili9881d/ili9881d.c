@@ -379,11 +379,16 @@ static int ili9881d_prepare(struct drm_panel *panel)
 
 		if (ret) {
 			printk(KERN_INFO "ili9881d_prepare: ForLoop-Step: %d, ret: %d\n", i, ret);
+			ret = ili9881d_unprepare(panel);
+			if (instr->op == ILI9881C_SWITCH_PAGE) 
+				ret = ili9881d_switch_page(ctx, instr->arg.page);
+			else if (instr->op == ILI9881C_COMMAND)
+				ret = ili9881d_send_cmd_data(ctx, instr->arg.cmd.cmd,
+							instr->arg.cmd.data);
 			/*
 			dsi_status = 1;
 			return ret;
 			*/
-			msleep(10);
 		}
 		
 	}
