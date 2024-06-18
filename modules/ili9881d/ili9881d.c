@@ -378,6 +378,7 @@ static int ili9881d_prepare(struct drm_panel *panel)
 						      instr->arg.cmd.data);
 
 		if (ret) {
+			printk(KERN_INFO "ili9881d_prepare: ForLoop-Step %d: %d\n", i, ret);
 			dsi_status = 1;
 			return ret;
 		}
@@ -385,18 +386,21 @@ static int ili9881d_prepare(struct drm_panel *panel)
 
 	ret = ili9881d_switch_page(ctx, 0);
 	if (ret) {
+		printk(KERN_INFO "ili9881d_prepare: switch_page_0-Return: %d\n", ret);
 		dsi_status = 1;
 		return ret;
 	}
 
 	ret = mipi_dsi_dcs_set_tear_on(ctx->dsi, MIPI_DSI_DCS_TEAR_MODE_VBLANK);
 	if (ret) {
+		printk(KERN_INFO "ili9881d_prepare: mipi-dsi-dcs-tear-on-Return: %d\n", ret);
 		dsi_status = 1;
 		return ret;
 	}
 
 	ret = mipi_dsi_dcs_exit_sleep_mode(ctx->dsi);
 	if (ret) {
+		printk(KERN_INFO "ili9881d_prepare: mipi-dsi-exit-sleep-mode-Return: %d\n", ret);
 		dsi_status = 1;
 		return ret;
 	}
