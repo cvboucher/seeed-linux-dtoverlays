@@ -355,6 +355,11 @@ static int ili9881d_prepare(struct drm_panel *panel)
 	unsigned int i;
 	int ret;
 
+	/* Unprepare */
+	mipi_dsi_dcs_enter_sleep_mode(ctx->dsi);
+	regulator_disable(ctx->power);
+	gpiod_set_value_cansleep(ctx->reset, 1);
+
 	/* Power the panel */
 	ret = regulator_enable(ctx->power);
 	if (ret)
@@ -379,12 +384,6 @@ static int ili9881d_prepare(struct drm_panel *panel)
 
 		if (ret) {
 			printk(KERN_INFO "ili9881d_prepare: ForLoop-Step: %d, ret: %d\n", i, ret);
-			ret = ili9881d_unprepare(panel);
-			if (instr->op == ILI9881C_SWITCH_PAGE) 
-				ret = ili9881d_switch_page(ctx, instr->arg.page);
-			else if (instr->op == ILI9881C_COMMAND)
-				ret = ili9881d_send_cmd_data(ctx, instr->arg.cmd.cmd,
-							instr->arg.cmd.data);
 			/*
 			dsi_status = 1;
 			return ret;
