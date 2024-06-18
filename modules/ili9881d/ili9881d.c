@@ -371,23 +371,21 @@ static int ili9881d_prepare(struct drm_panel *panel)
 	for (i = 0; i < ctx->desc->init_length; i++) {
 		const struct ili9881d_instr *instr = &ctx->desc->init[i];
 
-		do {
-			if (instr->op == ILI9881C_SWITCH_PAGE)
-				ret = ili9881d_switch_page(ctx, instr->arg.page);
-			else if (instr->op == ILI9881C_COMMAND)
-				ret = ili9881d_send_cmd_data(ctx, instr->arg.cmd.cmd,
-						      	instr->arg.cmd.data);
+		if (instr->op == ILI9881C_SWITCH_PAGE) 
+			ret = ili9881d_switch_page(ctx, instr->arg.page);
+		else if (instr->op == ILI9881C_COMMAND)
+			ret = ili9881d_send_cmd_data(ctx, instr->arg.cmd.cmd,
+						instr->arg.cmd.data);
 
-			if (ret) {
-				printk(KERN_INFO "ili9881d_prepare: ForLoop-Step: %d, ret: %d\n", i, ret);
-				/*
-				dsi_status = 1;
-				return ret;
-				*/
-				msleep(20);
-			}
+		if (ret) {
+			printk(KERN_INFO "ili9881d_prepare: ForLoop-Step: %d, ret: %d\n", i, ret);
+			/*
+			dsi_status = 1;
+			return ret;
+			*/
+			msleep(10);
+		}
 		
-		} while (ret);
 	}
 
 	ret = ili9881d_switch_page(ctx, 0);
