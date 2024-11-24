@@ -414,7 +414,7 @@ static int ili9881d_prepare(struct drm_panel *panel)
 			msleep(10);
 			continue; // Restart the sequence
 		}
-		pr_err("All steps succeeded, clear status and return success\n");
+		pr_info("All steps succeeded, clear status and return success\n");
 		/* If all steps succeeded, clear status and return success */
 		dsi_status = 0;
 		return 0;
