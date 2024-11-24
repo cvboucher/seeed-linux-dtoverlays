@@ -352,6 +352,86 @@ static int ili9881d_send_cmd_data(struct ili9881d *ctx, u8 cmd, u8 data)
 static int ili9881d_prepare(struct drm_panel *panel)
 {
 	struct ili9881d *ctx = panel_to_ili9881d(panel);
+	unsigned int i, attempt;
+	int ret;
+
+	for (attempt = 0; attempt < 3; attempt++) {
+		/* Power the panel */
+		ret = regulator_enable(ctx->power);
+		if (ret) {
+			pr_err("Failed to enable regulator, attempt %d\n", attempt + 1);
+			msleep(10);
+			continue; // Restart the sequence
+		}
+		msleep(5);
+
+		/* And reset it */
+		gpiod_set_value_cansleep(ctx->reset, 1);
+		msleep(20);
+
+		gpiod_set_value_cansleep(ctx->reset, 0);
+		msleep(20);
+
+		/* Initialize the panel */
+		for (i = 0; i < ctx->desc->init_length; i++) {
+			const struct ili9881d_instr *instr = &ctx->desc->init[i];
+
+			if (instr->op == ILI9881C_SWITCH_PAGE) 
+				ret = ili9881d_switch_page(ctx, instr->arg.page);
+			else if (instr->op == ILI9881C_COMMAND)
+				ret = ili9881d_send_cmd_data(ctx, instr->arg.cmd.cmd,
+							     instr->arg.cmd.data);
+
+			if (ret) {
+				pr_err("Failed panel init instruction %d, attempt %d\n", i, attempt + 1);
+				msleep(10);
+				break; // Restart the sequence
+			}
+		}
+
+		/* If panel init failed, restart the sequence */
+		if (ret)
+			continue;
+
+		/* Finalize initialization sequence */
+		ret = ili9881d_switch_page(ctx, 0);
+		if (ret) {
+			pr_err("Failed to switch to default page, attempt %d\n", attempt + 1);
+			msleep(10);
+			continue; // Restart the sequence
+		}
+
+		ret = mipi_dsi_dcs_set_tear_on(ctx->dsi, MIPI_DSI_DCS_TEAR_MODE_VBLANK);
+		if (ret) {
+			pr_err("Failed to set tear mode, attempt %d\n", attempt + 1);
+			msleep(10);
+			continue; // Restart the sequence
+		}
+
+		ret = mipi_dsi_dcs_exit_sleep_mode(ctx->dsi);
+		if (ret) {
+			pr_err("Failed to exit sleep mode, attempt %d\n", attempt + 1);
+			msleep(10);
+			continue; // Restart the sequence
+		}
+
+		/* If all steps succeeded, clear status and return success */
+		dsi_status = 0;
+		return 0;
+	}
+
+	/* If we exhaust all attempts, return the last error */
+	dsi_status = 1;
+	pr_err("Failed to prepare panel after 3 attempts\n");
+	printk(KERN_INFO "ReTerminalDM_LCDPrepareFailure\n");
+	return ret;
+}
+
+
+/*
+static int ili9881d_prepare(struct drm_panel *panel)
+{
+	struct ili9881d *ctx = panel_to_ili9881d(panel);
 	unsigned int i;
 	int ret;
 
@@ -406,7 +486,7 @@ static int ili9881d_prepare(struct drm_panel *panel)
 
 	return 0;
 }
-
+*/
 static int ili9881d_enable(struct drm_panel *panel)
 {
 	struct ili9881d *ctx = panel_to_ili9881d(panel);
