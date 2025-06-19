@@ -368,6 +368,7 @@ static int ili9881d_prepare(struct drm_panel *panel)
 						      instr->arg.cmd.data);
 
 		if (ret) {
+			printk(KERN_INFO "ReTerminalDM_LCDPrepareFailure\n");
 			return ret;
 		}
 	}
