@@ -382,28 +382,23 @@ static int ili9881d_prepare(struct drm_panel *panel)
 	if (ret)
 		return ret;
 
-	ret = mipi_dsi_dcs_exit_sleep_mode(ctx->dsi);
-	if (ret)
-		return ret;
-
-	if (ctx->desc->flags & ILI9881_FLAGS_PANEL_ON_IN_PREPARE) {
-		msleep(120);
-
-		ret = mipi_dsi_dcs_set_display_on(ctx->dsi);
-	}
-
 	return 0;
 }
 
 static int ili9881d_enable(struct drm_panel *panel)
 {
 	struct ili9881d *ctx = panel_to_ili9881d(panel);
+	int ret;
 
-	if (!(ctx->desc->flags & ILI9881_FLAGS_PANEL_ON_IN_PREPARE)) {
-		msleep(120);
+	ret = mipi_dsi_dcs_exit_sleep_mode(ctx->dsi);
+	if (ret)
+		return ret;
 
-		mipi_dsi_dcs_set_display_on(ctx->dsi);
-	}
+	msleep(120);
+
+	ret = mipi_dsi_dcs_set_display_on(ctx->dsi);
+	if (ret)
+		return ret;
 
 	return 0;
 }
@@ -412,9 +407,7 @@ static int ili9881d_disable(struct drm_panel *panel)
 {
 	struct ili9881d *ctx = panel_to_ili9881d(panel);
 
-	if (!(ctx->desc->flags & ILI9881_FLAGS_PANEL_ON_IN_PREPARE)) {
-		mipi_dsi_dcs_set_display_off(ctx->dsi);
-	}
+	mipi_dsi_dcs_set_display_off(ctx->dsi);
 
 	return 0;
 }
@@ -579,8 +572,7 @@ static const struct ili9881d_desc gjx101c7_desc = {
 	.init_length = ARRAY_SIZE(gjx101c7_init),
 	.mode = &nwe080_default_mode,
 	.mode_flags = MIPI_DSI_MODE_VIDEO_SYNC_PULSE | MIPI_DSI_MODE_VIDEO,
-	.flags = ILI9881_FLAGS_NO_SHUTDOWN_CMDS |
-		 ILI9881_FLAGS_PANEL_ON_IN_PREPARE,
+	.flags = ILI9881_FLAGS_NO_SHUTDOWN_CMDS,
 	.lanes = 4,
 };
 
