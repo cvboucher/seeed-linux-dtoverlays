@@ -400,12 +400,18 @@ static int ili9881d_enable(struct drm_panel *panel)
 	if (ret)
 		return ret;
 
+	if (ctx->panel.backlight)
+		backlight_enable(ctx->panel.backlight);
+
 	return 0;
 }
 
 static int ili9881d_disable(struct drm_panel *panel)
 {
 	struct ili9881d *ctx = panel_to_ili9881d(panel);
+
+	if (ctx->panel.backlight)
+		backlight_disable(ctx->panel.backlight);
 
 	mipi_dsi_dcs_set_display_off(ctx->dsi);
 
